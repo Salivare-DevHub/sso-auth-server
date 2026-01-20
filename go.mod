@@ -3,13 +3,15 @@ module github.com/Salivare-DevHub/sso-auth-server
 go 1.25.4
 
 require (
+	github.com/Salivare-DevHub/protos-sso v0.0.3
 	github.com/ilyakaznacheev/cleanenv v1.5.0
+	golang.org/x/oauth2 v0.32.0
 	google.golang.org/grpc v1.78.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
-	github.com/Salivare-DevHub/protos-sso v0.0.3 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
