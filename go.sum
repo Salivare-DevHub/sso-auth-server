@@ -1,5 +1,9 @@
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/Salivare-DevHub/protos-sso v0.0.2 h1:f9N+ZMhKRkNd+mrIlQ6aDL6plwyPJxO0aqUHMEQdGgE=
+github.com/Salivare-DevHub/protos-sso v0.0.2/go.mod h1:+8JfvqHa26EqLmE0uiVvi1DKekVSo9Ty7OIbGxNRINM=
+github.com/Salivare-DevHub/protos-sso v0.0.3 h1:C1fWGU6YFzgTqc9RTZmLpGZZOghrpwtpe36PhAgypGY=
+github.com/Salivare-DevHub/protos-sso v0.0.3/go.mod h1:+8JfvqHa26EqLmE0uiVvi1DKekVSo9Ty7OIbGxNRINM=
 github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
 github.com/go-logr/logr v1.4.3/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
 github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=

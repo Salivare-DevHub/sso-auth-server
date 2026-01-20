@@ -9,6 +9,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/Salivare-DevHub/protos-sso v0.0.3 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
