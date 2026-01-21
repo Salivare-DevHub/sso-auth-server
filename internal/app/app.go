@@ -2,11 +2,10 @@ package app
 
 import (
 	grpcapp "github.com/Salivare-DevHub/sso-auth-server/internal/app/grpc"
-	gprovider "github.com/Salivare-DevHub/sso-auth-server/internal/provider/google"
-	yprovider "github.com/Salivare-DevHub/sso-auth-server/internal/provider/yandex"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/auth/providers"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/provider/oauth"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/services/auth"
 	"log/slog"
-	"time"
 )
 
 type App struct {
@@ -16,30 +15,16 @@ type App struct {
 func New(
 	log *slog.Logger,
 	grpcPort int,
-	tokenTTL time.Duration,
 ) *App {
-	// TODO: init storage
-	// TODO: Remove hardcode
-	googleProvider := gprovider.New(
-		"google-client-id",
-		"google-secret",
-		"http://localhost:8080/auth/google/callback",
-	)
-	yandexProvider := yprovider.New(
-		"yandex-client-id",
-		"yandex-secret",
-		"http://localhost:8080/auth/yandex/callback",
-	)
+	googleOAuth := oauth.NewGoogleOAuth("id", "secret")
+	yandexOAuth := oauth.NewYandexOAuth("id", "secret")
 
-	// TODO: Добавить users, refresh, tokens
-	authService := auth.New(
-		log,
-		googleProvider,
-		yandexProvider,
-		users,
-		refresh,
-		tokens,
-	)
+	authStrategy := map[string]auth.LoginStrategy{
+		"google": providers.NewOAuthLogin(googleOAuth, users, refresh),
+		"yandex": providers.NewOAuthLogin(yandexOAuth, users, refresh),
+	}
+
+	authService := auth.New(log, authStrategy)
 
 	grpcApp := grpcapp.New(log, authService, grpcPort)
 

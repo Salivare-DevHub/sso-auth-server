@@ -3,17 +3,16 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
-)
-
-var (
-	ErrUnknownProvider = errors.New("unknown provider")
 )
 
 type LoginStrategy interface {
 	Login(ctx context.Context, code string) (access, refresh string, err error)
 }
+
+var (
+	ErrUnknownProvider = errors.New("unknown provider")
+)
 
 type Service struct {
 	log        *slog.Logger
@@ -28,26 +27,10 @@ func New(log *slog.Logger, strategies map[string]LoginStrategy) *Service {
 }
 
 func (s *Service) Login(ctx context.Context, provider string, code string) (string, string, error) {
-	const op = "auth.Service.Login"
-
-	log := s.log.With(
-		slog.String("op", op),
-		slog.String("provider", provider),
-	)
-
 	strat, ok := s.strategies[provider]
 	if !ok {
-		log.Warn("unknown provider")
-		return "", "", fmt.Errorf("%s: %w", op, ErrUnknownProvider)
+		return "", "", ErrUnknownProvider
 	}
 
-	access, refresh, err := strat.Login(ctx, code)
-	if err != nil {
-		log.Error("strategy login failed", slog.String("err", err.Error()))
-		return "", "", fmt.Errorf("%s: %w", op, err)
-	}
-
-	log.Info("login completed successfully")
-
-	return access, refresh, nil
+	return strat.Login(ctx, code)
 }
