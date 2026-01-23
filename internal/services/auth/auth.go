@@ -18,12 +18,15 @@ type IdentitySource interface {
 	FetchUser(ctx context.Context, code string) (*models.User, error)
 }
 
-type UserStore interface {
-	FindOrCreate(ctx context.Context, email string) (string, error)
+type UserSaver interface {
+	SaveUser(
+		ctx context.Context,
+		email string,
+	) (uid int64, err error)
 }
 
 type RefreshStore interface {
-	Save(ctx context.Context, userID string, refresh string) error
+	Save(ctx context.Context, userID int64, refresh string) error
 }
 
 type AppProvider interface {
@@ -33,7 +36,7 @@ type AppProvider interface {
 type Service struct {
 	log       *slog.Logger
 	providers map[string]IdentitySource
-	users     UserStore
+	userSaver UserSaver
 	refresh   RefreshStore
 	apps      AppProvider
 }
@@ -41,14 +44,14 @@ type Service struct {
 func New(
 	log *slog.Logger,
 	providers map[string]IdentitySource,
-	users UserStore,
+	userSaver UserSaver,
 	refresh RefreshStore,
 	apps AppProvider,
 ) *Service {
 	return &Service{
 		log:       log,
 		providers: providers,
-		users:     users,
+		userSaver: userSaver,
 		refresh:   refresh,
 		apps:      apps,
 	}
@@ -64,35 +67,42 @@ func (s *Service) Login(ctx context.Context, provider string, code string, appID
 
 	src, ok := s.providers[provider]
 	if !ok {
+		log.Error("failed to find provider")
 		return "", "", ErrUnknownProvider
 	}
 
 	userInfo, err := src.FetchUser(ctx, code)
 	if err != nil {
+		log.Error("failed to fetch user", slog.String("err", err.Error()))
 		return "", "", fmt.Errorf("%s: fetch user: %w", op, err)
 	}
 
-	userID, err := s.users.FindOrCreate(ctx, userInfo.Email)
+	userID, err := s.userSaver.SaveUser(ctx, userInfo.Email)
 	if err != nil {
+		log.Error("failed to save user", slog.String("err", err.Error()))
 		return "", "", fmt.Errorf("%s: find or create user: %w", op, err)
 	}
 
 	app, err := s.apps.GetByID(ctx, appID)
 	if err != nil {
+		log.Error("failed to find app", slog.String("err", err.Error()))
 		return "", "", fmt.Errorf("%s: get app: %w", op, err)
 	}
 
 	access, err := jwt.NewAccessToken(userID, *app)
 	if err != nil {
+		log.Error("failed to generate access token", slog.String("err", err.Error()))
 		return "", "", fmt.Errorf("%s: generate access token: %w", op, err)
 	}
 
 	refreshToken, err := jwt.NewRefreshToken()
 	if err != nil {
+		log.Error("failed to generate refresh token", slog.String("err", err.Error()))
 		return "", "", fmt.Errorf("%s: generate refresh token: %w", op, err)
 	}
 
 	if err := s.refresh.Save(ctx, userID, refreshToken); err != nil {
+		log.Error("failed to save refresh token", slog.String("err", err.Error()))
 		return "", "", fmt.Errorf("%s: save refresh token: %w", op, err)
 	}
 

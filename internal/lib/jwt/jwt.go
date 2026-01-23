@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func NewAccessToken(userID string, app models.App) (string, error) {
+func NewAccessToken(userID int64, app models.App) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
