@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	grpcapp "github.com/Salivare-DevHub/sso-auth-server/internal/app/grpc"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/auth/providers"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/grpc/user"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/providers/appconfig"
@@ -20,9 +21,18 @@ type App struct {
 func New(
 	log *slog.Logger,
 	grpcPort int,
+	AuthConfig config.AuthConfig,
 ) (*App, error) {
-	googleOAuth := oauth.NewGoogle("id", "secret")
-	yandexOAuth := oauth.NewYandex("id", "secret")
+	googleOAuth := oauth.NewGoogle(
+		AuthConfig.Google.ClientID,
+		AuthConfig.Google.ClientSecret,
+		AuthConfig.Google.RedirectURL,
+	)
+
+	yandexOAuth := oauth.NewYandex(
+		AuthConfig.Yandex.ClientID,
+		AuthConfig.Yandex.ClientSecret,
+	)
 
 	identitySource := map[string]auth.IdentitySource{
 		"google": providers.NewGoogleIdentity(googleOAuth),

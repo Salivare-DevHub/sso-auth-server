@@ -20,7 +20,7 @@ func main() {
 
 	log := setupLogger(cfg.Env)
 
-	application, err := app.New(log, cfg.GRPC.Port)
+	application, err := app.New(log, cfg.GRPC.Port, cfg.AuthProviders)
 	if err != nil {
 		log.Error("failed to init application", slog.String("err", err.Error()))
 		os.Exit(1)

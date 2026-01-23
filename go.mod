@@ -3,15 +3,17 @@ module github.com/Salivare-DevHub/sso-auth-server
 go 1.25.4
 
 require (
-	github.com/Salivare-DevHub/protos-sso v0.0.7
+	github.com/Salivare-DevHub/protos-sso v0.0.8
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/redis/go-redis/v9 v9.17.2
+	golang.org/x/oauth2 v0.32.0
 	google.golang.org/grpc v1.78.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect

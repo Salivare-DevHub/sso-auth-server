@@ -8,14 +8,32 @@ import (
 )
 
 type Config struct {
-	Env      string        `yaml:"env" env-default:"local"`
-	TokenTTL time.Duration `yaml:"token_ttl" env-required:"true"`
-	GRPC     GRPCConfig    `yaml:"grpc"`
+	Env           string        `yaml:"env" env-default:"local"`
+	TokenTTL      time.Duration `yaml:"token_ttl" env-required:"true"`
+	GRPC          GRPCConfig    `yaml:"grpc"`
+	AuthProviders AuthConfig    `yaml:"auth_providers" env-required:"true"`
 }
 
 type GRPCConfig struct {
 	Port    int           `yaml:"port"`
 	Timeout time.Duration `yaml:"timeout"`
+}
+
+type AuthConfig struct {
+	Google GoogleConfig `yaml:"google"`
+	Yandex YandexConfig `yaml:"yandex"`
+}
+
+type GoogleConfig struct {
+	ClientID     string `yaml:"client_id" env-required:"true"`
+	ClientSecret string `yaml:"client_secret" env-required:"true"`
+	RedirectURL  string `yaml:"redirect_url" env-required:"true"`
+}
+
+type YandexConfig struct {
+	ClientID     string `yaml:"client_id" env-required:"true"`
+	ClientSecret string `yaml:"client_secret" env-required:"true"`
+	RedirectURL  string `yaml:"redirect_url" env-required:"true"`
 }
 
 func MustLoad() *Config {
