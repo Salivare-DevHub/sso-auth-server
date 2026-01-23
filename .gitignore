@@ -32,3 +32,6 @@ go.work.sum
 .vscode
 
 .DS_Store
+
+!configs/apps_config_example.yaml
+!configs/config_example.yaml
