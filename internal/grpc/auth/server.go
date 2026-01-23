@@ -9,7 +9,7 @@ import (
 )
 
 type Auth interface {
-	Login(ctx context.Context, provider string, code string) (access, refresh string, err error)
+	Login(ctx context.Context, provider string, code string, appID int64) (access, refresh string, err error)
 }
 
 type ServerAPI struct {
@@ -35,7 +35,7 @@ func (s *ServerAPI) ExchangeCode(
 		return nil, status.Error(codes.InvalidArgument, "unknown provider")
 	}
 
-	access, refresh, err := s.auth.Login(ctx, provider, req.GetCode())
+	access, refresh, err := s.auth.Login(ctx, provider, req.GetCode(), req.GetAppId())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to exchange code")
 	}

@@ -1,9 +1,11 @@
 package app
 
 import (
+	"fmt"
 	grpcapp "github.com/Salivare-DevHub/sso-auth-server/internal/app/grpc"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/auth/providers"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/provider/oauth"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/providers/appconfig"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/providers/oauth"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/services/auth"
 	"log/slog"
 )
@@ -15,20 +17,25 @@ type App struct {
 func New(
 	log *slog.Logger,
 	grpcPort int,
-) *App {
-	googleOAuth := oauth.NewGoogleOAuth("id", "secret")
-	yandexOAuth := oauth.NewYandexOAuth("id", "secret")
+) (*App, error) {
+	googleOAuth := oauth.NewGoogle("id", "secret")
+	yandexOAuth := oauth.NewYandex("id", "secret")
 
-	authStrategy := map[string]auth.LoginStrategy{
-		"google": providers.NewOAuthLogin(googleOAuth, users, refresh),
-		"yandex": providers.NewOAuthLogin(yandexOAuth, users, refresh),
+	identitySource := map[string]auth.IdentitySource{
+		"google": providers.NewGoogleIdentity(googleOAuth),
+		"yandex": providers.NewYandexIdentity(yandexOAuth),
 	}
 
-	authService := auth.New(log, authStrategy)
+	appProvider, err := appconfig.NewYAML("./configs")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load app config: %w", err)
+	}
+
+	authService := auth.New(log, identitySource, userstore, storage, appProvider)
 
 	grpcApp := grpcapp.New(log, authService, grpcPort)
 
 	return &App{
 		GRPCSrv: grpcApp,
-	}
+	}, nil
 }

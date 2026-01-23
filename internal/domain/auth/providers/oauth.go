@@ -3,63 +3,32 @@ package providers
 import (
 	"context"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/lib/jwt"
 )
 
-type OAuthProvider interface {
+type OAuth interface {
 	Exchange(ctx context.Context, code string) (*models.User, error)
 }
 
-type UserStore interface {
-	FindOrCreate(ctx context.Context, email string) (string, error)
+type GoogleIdentity struct {
+	oauth OAuth
 }
 
-type RefreshStore interface {
-	Save(ctx context.Context, userID string, refresh string) error
+func NewGoogleIdentity(o OAuth) *GoogleIdentity {
+	return &GoogleIdentity{oauth: o}
 }
 
-type OAuthLogin struct {
-	oauth   OAuthProvider
-	users   UserStore
-	refresh RefreshStore
+func (g *GoogleIdentity) FetchUser(ctx context.Context, code string) (*models.User, error) {
+	return g.oauth.Exchange(ctx, code)
 }
 
-func NewOAuthLogin(
-	oauth OAuthProvider,
-	users UserStore,
-	refresh RefreshStore,
-) *OAuthLogin {
-	return &OAuthLogin{
-		oauth:   oauth,
-		users:   users,
-		refresh: refresh,
-	}
+type YandexIdentity struct {
+	oauth OAuth
 }
 
-func (s *OAuthLogin) Login(ctx context.Context, code string) (string, string, error) {
-	userInfo, err := s.oauth.Exchange(ctx, code)
-	if err != nil {
-		return "", "", err
-	}
+func NewYandexIdentity(o OAuth) *YandexIdentity {
+	return &YandexIdentity{oauth: o}
+}
 
-	userID, err := s.users.FindOrCreate(ctx, userInfo.Email)
-	if err != nil {
-		return "", "", err
-	}
-
-	access, err := jwt.NewAccessToken(userID)
-	if err != nil {
-		return "", "", err
-	}
-
-	refresh, err := jwt.NewRefreshToken()
-	if err != nil {
-		return "", "", err
-	}
-
-	if err := s.refresh.Save(ctx, userID, refresh); err != nil {
-		return "", "", err
-	}
-
-	return access, refresh, nil
+func (y *YandexIdentity) FetchUser(ctx context.Context, code string) (*models.User, error) {
+	return y.oauth.Exchange(ctx, code)
 }
