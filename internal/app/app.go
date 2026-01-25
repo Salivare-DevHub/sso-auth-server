@@ -11,46 +11,38 @@ import (
 	"github.com/Salivare-DevHub/sso-auth-server/internal/services/auth"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/storage/redis"
 	"log/slog"
-	"time"
 )
 
 type App struct {
 	GRPCSrv *grpcapp.App
 }
 
-func New(
-	log *slog.Logger,
-	grpcPort int,
-	AuthConfig config.AuthConfig,
-) (*App, error) {
-	googleOAuth := oauth.NewGoogle(
-		AuthConfig.Google.ClientID,
-		AuthConfig.Google.ClientSecret,
-		AuthConfig.Google.RedirectURL,
-	)
+func New(log *slog.Logger, cfg *config.Config) (*App, error) {
 
-	yandexOAuth := oauth.NewYandex(
-		AuthConfig.Yandex.ClientID,
-		AuthConfig.Yandex.ClientSecret,
-	)
+	identitySource := make(map[string]auth.IdentitySource)
 
-	identitySource := map[string]auth.IdentitySource{
-		"google": providers.NewGoogleIdentity(googleOAuth),
-		"yandex": providers.NewYandexIdentity(yandexOAuth),
+	for name, provider := range cfg.OAuthProviders {
+		switch name {
+		case providers.ProviderGoogle:
+			identitySource[name] = providers.NewGoogleIdentity(
+				oauth.NewGoogle(provider.ClientID, provider.ClientSecret, provider.RedirectURL),
+			)
+		case providers.ProviderYandex:
+			identitySource[name] = providers.NewYandexIdentity(
+				oauth.NewYandex(provider.ClientID, provider.ClientSecret),
+			)
+		}
 	}
 
-	appProvider, err := appconfig.NewYAML("./configs/appslocal.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to load app config: %w", err)
-	}
+	appProvider := appconfig.NewInternalApps(cfg.InternalApps)
 
 	userStore := user.NewClient()
-	redisClient := redis.New("localhost:6379")
-	refreshStore := redis.NewRefreshStore(redisClient, time.Hour*24*30)
+	redisClient := redis.New(fmt.Sprintf(":%d", cfg.Redis.Port))
+	refreshStore := redis.NewRefreshStore(redisClient, cfg.TokenTTL)
 
 	authService := auth.New(log, identitySource, userStore, refreshStore, appProvider)
 
-	grpcApp := grpcapp.New(log, authService, grpcPort)
+	grpcApp := grpcapp.New(log, authService, cfg.GRPC)
 
 	return &App{
 		GRPCSrv: grpcApp,

@@ -5,6 +5,11 @@ import (
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
 )
 
+const (
+	ProviderGoogle = "google"
+	ProviderYandex = "yandex"
+)
+
 type OAuth interface {
 	Exchange(ctx context.Context, code string) (*models.User, error)
 }

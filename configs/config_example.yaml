@@ -1,14 +1,9 @@
 env: "local" # dev, prod
 token_ttl: 1h
 grpc:
+  host: "localhost"
   port: 44040
   timeout: 2m
-auth_providers:
-  google:
-    client_id: ""
-    client_secret: ""
-    redirect_url: ""
-  yandex:
-    client_id: ""
-    client_secret: ""
-    redirect_url: ""
+redis:
+  host: "localhost"
+  port: 6379

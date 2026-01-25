@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"flag"
 	"github.com/ilyakaznacheev/cleanenv"
 	"os"
@@ -8,36 +9,39 @@ import (
 )
 
 type Config struct {
-	Env           string        `yaml:"env" env-default:"local"`
-	TokenTTL      time.Duration `yaml:"token_ttl" env-required:"true"`
-	GRPC          GRPCConfig    `yaml:"grpc"`
-	AuthProviders AuthConfig    `yaml:"auth_providers" env-required:"true"`
+	Env      string        `yaml:"env" env-default:"local"`
+	TokenTTL time.Duration `yaml:"token_ttl" env-required:"true"`
+	GRPC     GRPCConfig    `yaml:"grpc"`
+	Redis    RedisConfig   `yaml:"redis"`
+
+	OAuthProviders map[string]OAuthProvider  `yaml:"-"`
+	InternalApps   map[string]AppCredentials `yaml:"-"`
 }
 
 type GRPCConfig struct {
+	Host    string        `yaml:"host" env-required:"true"`
 	Port    int           `yaml:"port"`
 	Timeout time.Duration `yaml:"timeout"`
 }
 
-type AuthConfig struct {
-	Google GoogleConfig `yaml:"google"`
-	Yandex YandexConfig `yaml:"yandex"`
+type RedisConfig struct {
+	Host string `yaml:"host" env-required:"true"`
+	Port int    `yaml:"port" env-required:"true"`
 }
 
-type GoogleConfig struct {
-	ClientID     string `yaml:"client_id" env-required:"true"`
-	ClientSecret string `yaml:"client_secret" env-required:"true"`
-	RedirectURL  string `yaml:"redirect_url" env-required:"true"`
+type OAuthProvider struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	RedirectURL  string `json:"redirect_url"`
 }
 
-type YandexConfig struct {
-	ClientID     string `yaml:"client_id" env-required:"true"`
-	ClientSecret string `yaml:"client_secret" env-required:"true"`
-	RedirectURL  string `yaml:"redirect_url" env-required:"true"`
+type AppCredentials struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
 }
 
 func MustLoad() *Config {
-	path := fetchConfigPatch()
+	path := fetchConfigPath()
 
 	if path == "" {
 		panic("config file path is empty")
@@ -57,17 +61,35 @@ func MustLoadByPath(configPath string) *Config {
 		panic("failed to read config: " + err.Error())
 	}
 
+	oauthJSON := os.Getenv("OAUTH_PROVIDERS")
+	if oauthJSON == "" {
+		panic("OAUTH_PROVIDERS env variable is required")
+	}
+
+	if err := json.Unmarshal([]byte(oauthJSON), &cfg.OAuthProviders); err != nil {
+		panic("failed to parse OAUTH_PROVIDERS: " + err.Error())
+	}
+
+	internalJSON := os.Getenv("INTERNAL_APPS")
+	if internalJSON == "" {
+		panic("INTERNAL_APPS env variable is required")
+	}
+
+	if err := json.Unmarshal([]byte(internalJSON), &cfg.InternalApps); err != nil {
+		panic("failed to parse INTERNAL_APPS: " + err.Error())
+	}
+
 	return &cfg
 }
 
-func fetchConfigPatch() string {
+func fetchConfigPath() string {
 	var res string
 
 	flag.StringVar(&res, "config", "", "path to config file")
 	flag.Parse()
 
 	if res == "" {
-		res = os.Getenv("CONFIG_PATCH")
+		res = os.Getenv("CONFIG_PATH")
 	}
 
 	return res

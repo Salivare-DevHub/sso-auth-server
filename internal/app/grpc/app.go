@@ -2,31 +2,38 @@ package grpcapp
 
 import (
 	"fmt"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
 	authgrpc "github.com/Salivare-DevHub/sso-auth-server/internal/grpc/auth"
+	grpcmw "github.com/Salivare-DevHub/sso-auth-server/internal/middleware/grpc"
 	"google.golang.org/grpc"
 	"log/slog"
 	"net"
+	"strconv"
 )
 
 type App struct {
 	log        *slog.Logger
 	gRPCServer *grpc.Server
+	host       string
 	port       int
 }
 
 func New(
 	log *slog.Logger,
 	authService authgrpc.Auth,
-	port int,
+	cfg config.GRPCConfig,
 ) *App {
-	gRPCServer := grpc.NewServer()
+	gRPCServer := grpc.NewServer(
+		grpc.UnaryInterceptor(grpcmw.Timeout(cfg.Timeout)),
+	)
 
 	authgrpc.Register(gRPCServer, authService)
 
 	return &App{
 		log:        log,
 		gRPCServer: gRPCServer,
-		port:       port,
+		host:       cfg.Host,
+		port:       cfg.Port,
 	}
 }
 
@@ -44,7 +51,8 @@ func (a *App) Run() error {
 		slog.Int("port", a.port),
 	)
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
+	addr := net.JoinHostPort(a.host, strconv.Itoa(a.port))
+	l, err := net.Listen("tcp", addr)
 
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)

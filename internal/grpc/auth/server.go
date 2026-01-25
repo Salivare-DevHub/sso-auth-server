@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	authv1 "github.com/Salivare-DevHub/protos-sso/gen/go/sso/auth"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/auth/providers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -49,9 +50,9 @@ func (s *ServerAPI) ExchangeCode(
 func providerToString(p authv1.Provider) string {
 	switch p {
 	case authv1.Provider_GOOGLE:
-		return "google"
+		return providers.ProviderGoogle
 	case authv1.Provider_YANDEX:
-		return "yandex"
+		return providers.ProviderYandex
 	default:
 		return ""
 	}
