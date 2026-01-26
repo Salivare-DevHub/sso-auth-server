@@ -9,31 +9,38 @@ import (
 	"log/slog"
 	"net"
 	"strconv"
+	"time"
 )
 
 type App struct {
-	log        *slog.Logger
-	gRPCServer *grpc.Server
-	host       string
-	port       int
+	log             *slog.Logger
+	gRPCServer      *grpc.Server
+	host            string
+	port            int
+	shutdownTimeout time.Duration
 }
 
 func New(
 	log *slog.Logger,
 	authService authgrpc.Auth,
-	cfg config.GRPCConfig,
+	grpcCfg config.GRPCConfig,
+	internalApps map[string]config.AppCredentials,
 ) *App {
 	gRPCServer := grpc.NewServer(
-		grpc.UnaryInterceptor(grpcmw.Timeout(cfg.Timeout)),
+		grpc.ChainUnaryInterceptor(
+			grpcmw.InternalAuth(internalApps),
+			grpcmw.Timeout(grpcCfg.Timeout),
+		),
 	)
 
 	authgrpc.Register(gRPCServer, authService)
 
 	return &App{
-		log:        log,
-		gRPCServer: gRPCServer,
-		host:       cfg.Host,
-		port:       cfg.Port,
+		log:             log,
+		gRPCServer:      gRPCServer,
+		host:            grpcCfg.Host,
+		port:            grpcCfg.Port,
+		shutdownTimeout: grpcCfg.ShutdownTimeout,
 	}
 }
 
@@ -48,6 +55,7 @@ func (a *App) Run() error {
 
 	log := a.log.With(
 		slog.String("op", op),
+		slog.String("host", a.host),
 		slog.Int("port", a.port),
 	)
 
@@ -71,8 +79,20 @@ func (a *App) Stop() {
 	const op = "grpcapp.Stop"
 
 	log := a.log.With(slog.String("op", op))
-
 	log.Info("gRPC server is stopping", slog.Int("port", a.port))
 
-	a.gRPCServer.GracefulStop()
+	done := make(chan struct{})
+
+	go func() {
+		a.gRPCServer.GracefulStop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		log.Info("gRPC server stopped gracefully")
+	case <-time.After(a.shutdownTimeout):
+		log.Warn("Graceful stop timed out, forcing stop")
+		a.gRPCServer.Stop()
+	}
 }

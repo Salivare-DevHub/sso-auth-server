@@ -6,7 +6,6 @@ import (
 	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/auth/providers"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/grpc/user"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/providers/appconfig"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/providers/oauth"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/services/auth"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/storage/redis"
@@ -34,15 +33,13 @@ func New(log *slog.Logger, cfg *config.Config) (*App, error) {
 		}
 	}
 
-	appProvider := appconfig.NewInternalApps(cfg.InternalApps)
-
 	userStore := user.NewClient()
 	redisClient := redis.New(fmt.Sprintf(":%d", cfg.Redis.Port))
 	refreshStore := redis.NewRefreshStore(redisClient, cfg.TokenTTL)
 
-	authService := auth.New(log, identitySource, userStore, refreshStore, appProvider)
+	authService := auth.New(log, identitySource, userStore, refreshStore)
 
-	grpcApp := grpcapp.New(log, authService, cfg.GRPC)
+	grpcApp := grpcapp.New(log, authService, cfg.GRPC, cfg.InternalApps)
 
 	return &App{
 		GRPCSrv: grpcApp,

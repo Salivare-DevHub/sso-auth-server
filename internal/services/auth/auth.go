@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	grpcmw "github.com/Salivare-DevHub/sso-auth-server/internal/middleware/grpc"
 	"log/slog"
 
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
@@ -38,7 +39,6 @@ type Service struct {
 	providers map[string]IdentitySource
 	userSaver UserSaver
 	refresh   RefreshStore
-	apps      AppProvider
 }
 
 func New(
@@ -46,18 +46,16 @@ func New(
 	providers map[string]IdentitySource,
 	userSaver UserSaver,
 	refresh RefreshStore,
-	apps AppProvider,
 ) *Service {
 	return &Service{
 		log:       log,
 		providers: providers,
 		userSaver: userSaver,
 		refresh:   refresh,
-		apps:      apps,
 	}
 }
 
-func (s *Service) Login(ctx context.Context, provider string, code string, appID int64) (string, string, error) {
+func (s *Service) Login(ctx context.Context, provider string, code string) (string, string, error) {
 	const op = "auth.Service.Login"
 
 	log := s.log.With(
@@ -83,10 +81,21 @@ func (s *Service) Login(ctx context.Context, provider string, code string, appID
 		return "", "", fmt.Errorf("%s: find or create user: %w", op, err)
 	}
 
-	app, err := s.apps.GetByID(ctx, appID)
+	appID, err := grpcmw.GetAppID(ctx)
 	if err != nil {
-		log.Error("failed to find app", slog.String("err", err.Error()))
-		return "", "", fmt.Errorf("%s: get app: %w", op, err)
+		log.Error("failed to get app_id", slog.String("err", err.Error()))
+		return "", "", err
+	}
+
+	appName, err := grpcmw.GetAppName(ctx)
+	if err != nil {
+		log.Error("failed to get app_name", slog.String("err", err.Error()))
+		return "", "", err
+	}
+
+	app := &models.App{
+		ID:   appID,
+		Name: appName,
 	}
 
 	access, err := jwt.NewAccessToken(userID, *app)

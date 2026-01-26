@@ -19,9 +19,10 @@ type Config struct {
 }
 
 type GRPCConfig struct {
-	Host    string        `yaml:"host" env-required:"true"`
-	Port    int           `yaml:"port"`
-	Timeout time.Duration `yaml:"timeout"`
+	Host            string        `yaml:"host" env-required:"true"`
+	Port            int           `yaml:"port"`
+	Timeout         time.Duration `yaml:"timeout"`
+	ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
 }
 
 type RedisConfig struct {
