@@ -2,7 +2,8 @@ package oauth
 
 import (
 	"context"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
+
+	"github.com/salivare-io/sso-auth-server/internal/domain/models"
 )
 
 type Yandex struct {

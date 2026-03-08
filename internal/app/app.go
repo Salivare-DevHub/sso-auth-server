@@ -5,13 +5,13 @@ import (
 
 	"github.com/salivare-io/slogx"
 
-	rpcapp "github.com/Salivare-DevHub/sso-auth-server/internal/app/rpc"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/auth/providers"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/providers/oauth"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/rpc/user"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/services/auth"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/storage/redis"
+	rpcapp "github.com/salivare-io/sso-auth-server/internal/app/rpc"
+	"github.com/salivare-io/sso-auth-server/internal/config"
+	"github.com/salivare-io/sso-auth-server/internal/domain/auth/providers"
+	"github.com/salivare-io/sso-auth-server/internal/providers/oauth"
+	"github.com/salivare-io/sso-auth-server/internal/rpc/user"
+	"github.com/salivare-io/sso-auth-server/internal/services/auth"
+	"github.com/salivare-io/sso-auth-server/internal/storage/redis"
 )
 
 type App struct {
@@ -19,7 +19,6 @@ type App struct {
 }
 
 func New(log *slogx.Logger, cfg *config.Config) (*App, error) {
-
 	identitySource := make(map[string]auth.IdentitySource)
 
 	for name, provider := range cfg.OAuthProviders {

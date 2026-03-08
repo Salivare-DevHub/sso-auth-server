@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
+	"github.com/salivare-io/sso-auth-server/internal/domain/models"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )

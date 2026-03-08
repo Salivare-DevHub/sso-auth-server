@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Salivare-DevHub/sso-auth-server/internal/app"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
+	"github.com/salivare-io/sso-auth-server/internal/app"
+	"github.com/salivare-io/sso-auth-server/internal/config"
 	"github.com/salivare-io/slogx"
 )
 

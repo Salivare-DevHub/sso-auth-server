@@ -8,13 +8,11 @@ import (
 
 	"github.com/salivare-io/slogx"
 
-	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/lib/jwt"
+	"github.com/salivare-io/sso-auth-server/internal/domain/models"
+	"github.com/salivare-io/sso-auth-server/internal/lib/jwt"
 )
 
-var (
-	ErrUnknownProvider = errors.New("unknown provider")
-)
+var ErrUnknownProvider = errors.New("unknown provider")
 
 type IdentitySource interface {
 	FetchUser(ctx context.Context, code string) (*models.User, error)

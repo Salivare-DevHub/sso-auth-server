@@ -3,7 +3,7 @@ package providers
 import (
 	"context"
 
-	"github.com/salivare-io/sso-auth-server/internal/domain/models"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
 )
 
 const (

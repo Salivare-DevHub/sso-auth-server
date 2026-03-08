@@ -10,7 +10,7 @@ import (
 	authv1 "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1"
 	authconnect "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1/authservicev1connect"
 
-	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/auth/providers"
+	"github.com/salivare-io/sso-auth-server/internal/domain/auth/providers"
 )
 
 type Auth interface {

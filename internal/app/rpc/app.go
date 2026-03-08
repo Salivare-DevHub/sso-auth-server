@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"connectrpc.com/grpcreflect"
-	rpcmiddleware "github.com/Salivare-DevHub/sso-auth-server/internal/middleware/rpc"
+	rpcmiddleware "github.com/salivare-io/sso-auth-server/internal/middleware/rpc"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	authconnect "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1/authservicev1connect"
@@ -19,8 +19,8 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
-	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
-	authrpc "github.com/Salivare-DevHub/sso-auth-server/internal/rpc/auth"
+	"github.com/salivare-io/sso-auth-server/internal/config"
+	authrpc "github.com/salivare-io/sso-auth-server/internal/rpc/auth"
 )
 
 type App struct {

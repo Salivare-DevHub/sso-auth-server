@@ -1,4 +1,4 @@
-module github.com/Salivare-DevHub/sso-auth-server
+module github.com/salivare-io/sso-auth-server
 
 go 1.25.4
 
