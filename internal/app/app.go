@@ -2,18 +2,19 @@ package app
 
 import (
 	"fmt"
-	grpcapp "github.com/Salivare-DevHub/sso-auth-server/internal/app/grpc"
+	"log/slog"
+
+	rpcapp "github.com/Salivare-DevHub/sso-auth-server/internal/app/rpc"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/auth/providers"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/grpc/user"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/providers/oauth"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/rpc/user"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/services/auth"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/storage/redis"
-	"log/slog"
 )
 
 type App struct {
-	GRPCSrv *grpcapp.App
+	RPCSrv *rpcapp.App
 }
 
 func New(log *slog.Logger, cfg *config.Config) (*App, error) {
@@ -34,14 +35,15 @@ func New(log *slog.Logger, cfg *config.Config) (*App, error) {
 	}
 
 	userStore := user.NewClient()
+
 	redisClient := redis.New(fmt.Sprintf(":%d", cfg.Redis.Port))
 	refreshStore := redis.NewRefreshStore(redisClient, cfg.TokenTTL)
 
 	authService := auth.New(log, identitySource, userStore, refreshStore)
 
-	grpcApp := grpcapp.New(log, authService, cfg.GRPC, cfg.InternalApps)
+	rpcApp := rpcapp.New(log, authService, cfg.HTTP, cfg.Env)
 
 	return &App{
-		GRPCSrv: grpcApp,
+		RPCSrv: rpcApp,
 	}, nil
 }

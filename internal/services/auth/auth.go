@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	grpcmw "github.com/Salivare-DevHub/sso-auth-server/internal/middleware/grpc"
 	"log/slog"
+
+	grpcmw "github.com/Salivare-DevHub/sso-auth-server/internal/middleware/grpc"
 
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/lib/jwt"

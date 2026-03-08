@@ -3,22 +3,29 @@ package config
 import (
 	"encoding/json"
 	"flag"
-	"github.com/ilyakaznacheev/cleanenv"
 	"os"
 	"time"
+
+	"github.com/ilyakaznacheev/cleanenv"
+)
+
+const (
+	EnvLocal = "local"
+	EnvDev   = "dev"
+	EnvProd  = "prod"
 )
 
 type Config struct {
 	Env      string        `yaml:"env" env-default:"local"`
 	TokenTTL time.Duration `yaml:"token_ttl" env-required:"true"`
-	GRPC     GRPCConfig    `yaml:"grpc"`
+	HTTP     HTTPConfig    `yaml:"http"`
 	Redis    RedisConfig   `yaml:"redis"`
 
 	OAuthProviders map[string]OAuthProvider  `yaml:"-"`
 	InternalApps   map[string]AppCredentials `yaml:"-"`
 }
 
-type GRPCConfig struct {
+type HTTPConfig struct {
 	Host            string        `yaml:"host" env-required:"true"`
 	Port            int           `yaml:"port"`
 	Timeout         time.Duration `yaml:"timeout"`

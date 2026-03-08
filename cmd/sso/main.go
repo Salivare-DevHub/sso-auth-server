@@ -1,18 +1,13 @@
 package main
 
 import (
-	"github.com/Salivare-DevHub/sso-auth-server/internal/app"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-)
 
-const (
-	envLocal = "local"
-	envDev   = "dev"
-	envProd  = "prod"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/app"
+	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
 )
 
 func main() {
@@ -26,7 +21,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	go application.GRPCSrv.MustRun()
+	go application.RPCSrv.MustRun()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
@@ -35,7 +30,7 @@ func main() {
 
 	log.Info("Shutting down...")
 
-	application.GRPCSrv.Stop()
+	application.RPCSrv.Stop()
 
 	log.Info("Goodbye!")
 }
@@ -44,15 +39,15 @@ func setupLogger(env string) *slog.Logger {
 	var log *slog.Logger
 
 	switch env {
-	case envLocal:
+	case config.EnvLocal:
 		log = slog.New(
 			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		)
-	case envDev:
+	case config.EnvDev:
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		)
-	case envProd:
+	case config.EnvProd:
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
 		)
