@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"connectrpc.com/grpcreflect"
-	rpcmiddleware "github.com/salivare-io/sso-auth-server/internal/middleware/rpc"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	authconnect "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1/authservicev1connect"
 	"github.com/salivare-io/slogx"
+	rpcmiddleware "github.com/salivare-io/sso-auth-server/internal/middleware/rpc"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 

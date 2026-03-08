@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/salivare-io/sso-auth-server/internal/domain/models"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/salivare-io/sso-auth-server/internal/domain/models"
 )
 
 func NewAccessToken(userID int64, app models.App) (string, error) {
