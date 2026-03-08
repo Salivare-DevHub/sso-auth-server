@@ -11,8 +11,11 @@ import (
 	"time"
 
 	"connectrpc.com/grpcreflect"
+	rpcmiddleware "github.com/Salivare-DevHub/sso-auth-server/internal/middleware/rpc"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	authconnect "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1/authservicev1connect"
+	"github.com/salivare-io/slogx"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -21,7 +24,7 @@ import (
 )
 
 type App struct {
-	log             *slog.Logger
+	log             *slogx.Logger
 	router          chi.Router
 	server          *http.Server
 	host            string
@@ -30,31 +33,27 @@ type App struct {
 }
 
 func New(
-	log *slog.Logger,
+	log *slogx.Logger,
 	authService authrpc.Auth,
 	httpCfg config.HTTPConfig,
 	envCfh string,
 ) *App {
 	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Recoverer)
+	r.Use(rpcmiddleware.LoggerContext(log))
+	r.Use(rpcmiddleware.Logger(log))
+	r.Use(middleware.Timeout(httpCfg.Timeout))
+
+	// TODO: забирать из секретов
+	r.Use(rpcmiddleware.Bearer("expectedToken"))
 
 	// mount generated Connect handler via adapter register
 	authrpc.Register(r, authService)
 
-	if envCfh == config.EnvLocal || envCfh == config.EnvProd {
-		reflector := grpcreflect.NewStaticReflector(
-			authconnect.AuthServiceName,
-		)
-
-		// reflection handlers
-		pathV1, handlerV1 := grpcreflect.NewHandlerV1(reflector)
-		pathV1alpha, handlerV1alpha := grpcreflect.NewHandlerV1Alpha(reflector)
-
-		// mount reflection handlers at returned paths (root)
-		r.Handle(pathV1, handlerV1)
-		r.Handle(pathV1alpha, handlerV1alpha)
-
-		log.Info("Registered with grpc reflection")
-	}
+	enableReflection := envCfh == config.EnvLocal || envCfh == config.EnvProd
+	registerReflection(r, log, enableReflection)
 
 	addr := net.JoinHostPort(httpCfg.Host, strconv.Itoa(httpCfg.Port))
 
@@ -120,4 +119,24 @@ func (a *App) Stop() {
 	}
 
 	log.Info("RPC HTTP server stopped gracefully")
+}
+
+func registerReflection(r chi.Router, log *slogx.Logger, enable bool) {
+	if !enable {
+		return
+	}
+
+	reflector := grpcreflect.NewStaticReflector(
+		authconnect.AuthServiceName,
+	)
+
+	// reflection handlers
+	pathV1, handlerV1 := grpcreflect.NewHandlerV1(reflector)
+	pathV1alpha, handlerV1alpha := grpcreflect.NewHandlerV1Alpha(reflector)
+
+	// mount reflection handlers at returned paths (root)
+	r.Handle(pathV1, handlerV1)
+	r.Handle(pathV1alpha, handlerV1alpha)
+
+	log.Info("registered gRPC reflection", slog.String("path_v1", pathV1))
 }

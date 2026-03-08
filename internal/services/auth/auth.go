@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	grpcmw "github.com/Salivare-DevHub/sso-auth-server/internal/middleware/grpc"
+	"github.com/salivare-io/slogx"
 
 	"github.com/Salivare-DevHub/sso-auth-server/internal/domain/models"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/lib/jwt"
@@ -36,14 +36,14 @@ type AppProvider interface {
 }
 
 type Service struct {
-	log       *slog.Logger
+	log       *slogx.Logger
 	providers map[string]IdentitySource
 	userSaver UserSaver
 	refresh   RefreshStore
 }
 
 func New(
-	log *slog.Logger,
+	log *slogx.Logger,
 	providers map[string]IdentitySource,
 	userSaver UserSaver,
 	refresh RefreshStore,
@@ -82,21 +82,10 @@ func (s *Service) Login(ctx context.Context, provider string, code string) (stri
 		return "", "", fmt.Errorf("%s: find or create user: %w", op, err)
 	}
 
-	appID, err := grpcmw.GetAppID(ctx)
-	if err != nil {
-		log.Error("failed to get app_id", slog.String("err", err.Error()))
-		return "", "", err
-	}
-
-	appName, err := grpcmw.GetAppName(ctx)
-	if err != nil {
-		log.Error("failed to get app_name", slog.String("err", err.Error()))
-		return "", "", err
-	}
-
+	// TODO: убрать харкод
 	app := &models.App{
-		ID:   appID,
-		Name: appName,
+		ID:   "hardcoded-app-id-123",
+		Name: "internal-service",
 	}
 
 	access, err := jwt.NewAccessToken(userID, *app)

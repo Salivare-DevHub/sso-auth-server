@@ -2,7 +2,8 @@ package app
 
 import (
 	"fmt"
-	"log/slog"
+
+	"github.com/salivare-io/slogx"
 
 	rpcapp "github.com/Salivare-DevHub/sso-auth-server/internal/app/rpc"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
@@ -17,7 +18,7 @@ type App struct {
 	RPCSrv *rpcapp.App
 }
 
-func New(log *slog.Logger, cfg *config.Config) (*App, error) {
+func New(log *slogx.Logger, cfg *config.Config) (*App, error) {
 
 	identitySource := make(map[string]auth.IdentitySource)
 

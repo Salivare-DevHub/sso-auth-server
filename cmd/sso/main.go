@@ -8,6 +8,7 @@ import (
 
 	"github.com/Salivare-DevHub/sso-auth-server/internal/app"
 	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
+	"github.com/salivare-io/slogx"
 )
 
 func main() {
@@ -35,23 +36,23 @@ func main() {
 	log.Info("Goodbye!")
 }
 
-func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
+func setupLogger(env string) *slogx.Logger {
+	var level slog.Level
 
 	switch env {
 	case config.EnvLocal:
-		log = slog.New(
-			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
+		level = slogx.LevelTrace
 	case config.EnvDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
+		level = slog.LevelDebug
 	case config.EnvProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
-		)
+		level = slog.LevelInfo
+	default:
+		level = slog.LevelInfo
 	}
 
-	return log
+	return slogx.New(
+		slogx.WithLevel(level),
+		slogx.WithContextKeys("trace_id", "request_id"),
+		slogx.WithRemoval(slogx.NewRemovalSet().Add("bearer_token")),
+	)
 }
