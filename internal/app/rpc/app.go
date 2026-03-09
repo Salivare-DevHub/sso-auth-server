@@ -83,6 +83,11 @@ func (a *App) MustRun() {
 func (a *App) Run() error {
 	const op = "rpcapp.Run"
 
+	ln, err := net.Listen("tcp", a.server.Addr)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
 	log := a.log.With(
 		slog.String("op", op),
 		slog.String("host", a.host),
@@ -91,7 +96,7 @@ func (a *App) Run() error {
 
 	log.Info("RPC HTTP server is running", slog.String("address", a.server.Addr))
 
-	if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := a.server.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
