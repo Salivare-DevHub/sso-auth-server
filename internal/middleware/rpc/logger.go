@@ -10,6 +10,7 @@ import (
 	"github.com/salivare-io/slogx"
 )
 
+// LogFieldRequestID is the log field name for request IDs.
 const LogFieldRequestID = "request_id"
 
 // GetRequestID returns a request id from the context that sets chi middleware.RequestID.
@@ -39,21 +40,43 @@ func LoggerContext(log *slogx.Logger) func(http.Handler) http.Handler {
 // Logger Logins the method, path, and duration of the request.
 func Logger(log *slogx.Logger) func(http.Handler) http.Handler {
 	log = log.With(slog.String("component", "http"))
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				start := time.Now()
-				next.ServeHTTP(w, r)
-				log.Info(
-					"request completed",
-					slog.String("method", r.Method),
-					slog.String("path", r.URL.Path),
-					slog.String("remote_addr", r.RemoteAddr),
-					slog.String("user_agent", r.UserAgent()),
-					slog.String(LogFieldRequestID, GetRequestID(r.Context())),
-					slog.Duration("duration", time.Since(start)),
-				)
-			},
-		)
-	}
+
+	return chimw.RequestLogger(&slogFormatter{log: log})
+}
+
+type slogFormatter struct {
+	log *slogx.Logger
+}
+
+func (f *slogFormatter) NewLogEntry(r *http.Request) chimw.LogEntry {
+	entry := f.log.With(
+		slog.String("method", r.Method),
+		slog.String("path", r.URL.Path),
+		slog.String("remote_addr", r.RemoteAddr),
+		slog.String("user_agent", r.UserAgent()),
+		slog.String(LogFieldRequestID, GetRequestID(r.Context())),
+	)
+
+	return &slogEntry{log: entry}
+}
+
+type slogEntry struct {
+	log *slogx.Logger
+}
+
+func (e *slogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
+	e.log.Info(
+		"request completed",
+		slog.Int("status", status),
+		slog.Int("bytes", bytes),
+		slog.Duration("duration", elapsed),
+	)
+}
+
+func (e *slogEntry) Panic(v interface{}, stack []byte) {
+	e.log.Error(
+		"request panic",
+		slog.Any("panic", v),
+		slog.String("stack", string(stack)),
+	)
 }

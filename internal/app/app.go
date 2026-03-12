@@ -1,49 +1,94 @@
 package app
 
 import (
-	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/salivare-io/slogx"
 
 	rpcapp "github.com/salivare-io/sso-auth-server/internal/app/rpc"
 	"github.com/salivare-io/sso-auth-server/internal/config"
+	appmanager "github.com/salivare-io/sso-auth-server/internal/domain/app"
 	"github.com/salivare-io/sso-auth-server/internal/domain/auth/providers"
+	"github.com/salivare-io/sso-auth-server/internal/domain/models"
+	userrepo "github.com/salivare-io/sso-auth-server/internal/domain/user"
 	"github.com/salivare-io/sso-auth-server/internal/providers/oauth"
-	"github.com/salivare-io/sso-auth-server/internal/rpc/user"
 	"github.com/salivare-io/sso-auth-server/internal/services/auth"
 	"github.com/salivare-io/sso-auth-server/internal/storage/redis"
 )
 
+// App wires together RPC server and dependencies.
 type App struct {
 	RPCSrv *rpcapp.App
 }
 
+var identitySourceBuilders = map[string]func(config.OAuthProvider) auth.IdentitySource{
+	providers.ProviderGoogle: func(p config.OAuthProvider) auth.IdentitySource {
+		return providers.NewGoogleIdentity(
+			oauth.NewGoogle(
+				p.ClientID,
+				p.ClientSecret,
+				p.RedirectURL,
+				p.TokenURL,
+				p.UserInfoURL,
+				p.Scopes,
+			),
+		)
+	},
+	providers.ProviderYandex: func(p config.OAuthProvider) auth.IdentitySource {
+		return providers.NewYandexIdentity(
+			oauth.NewYandex(
+				p.ClientID,
+				p.ClientSecret,
+				p.RedirectURL,
+				p.TokenURL,
+				p.UserInfoURL,
+				p.Scopes,
+			),
+		)
+	},
+}
+
+// New builds the application with all dependencies.
 func New(log *slogx.Logger, cfg *config.Config) (*App, error) {
 	identitySource := make(map[string]auth.IdentitySource)
 
 	for name, provider := range cfg.OAuthProviders {
-		switch name {
-		case providers.ProviderGoogle:
-			identitySource[name] = providers.NewGoogleIdentity(
-				oauth.NewGoogle(provider.ClientID, provider.ClientSecret, provider.RedirectURL),
-			)
-		case providers.ProviderYandex:
-			identitySource[name] = providers.NewYandexIdentity(
-				oauth.NewYandex(provider.ClientID, provider.ClientSecret),
-			)
+		if build, ok := identitySourceBuilders[name]; ok {
+			identitySource[name] = build(provider)
 		}
 	}
 
-	userStore := user.NewClient()
+	userStore := userrepo.NewInMemoryRepository()
 
-	redisClient := redis.New(fmt.Sprintf(":%d", cfg.Redis.Port))
+	redisClient := redis.New(net.JoinHostPort(cfg.Redis.Host, strconv.Itoa(cfg.Redis.Port)))
 	refreshStore := redis.NewRefreshStore(redisClient, cfg.TokenTTL)
 
-	authService := auth.New(log, identitySource, userStore, refreshStore)
+	// Initialize AppManager for apps and bearer token management.
+	appsMap := convertInternalAppsToModels(cfg.InternalApps)
+	appManager := appmanager.NewAppManager(appsMap)
 
-	rpcApp := rpcapp.New(log, authService, cfg.HTTP, cfg.Env)
+	authService := auth.New(log, identitySource, userStore, refreshStore, appManager)
+
+	rpcApp := rpcapp.New(log, authService, appManager, cfg.HTTP, cfg.Env)
 
 	return &App{
 		RPCSrv: rpcApp,
 	}, nil
+}
+
+// convertInternalAppsToModels converts config to app models.
+func convertInternalAppsToModels(appsConfig map[string]config.AppCredentials) map[string]*models.App {
+	appsMap := make(map[string]*models.App)
+	for appID, cred := range appsConfig {
+		appsMap[appID] = &models.App{
+			ID:          appID,
+			Name:        cred.ClientID,
+			BearerToken: cred.BearerToken,
+			SigningKey:  cred.SigningKey,
+			AccessTTL:   cred.AccessTTL,
+			RefreshTTL:  cred.RefreshTTL,
+		}
+	}
+	return appsMap
 }

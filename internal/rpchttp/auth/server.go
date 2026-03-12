@@ -11,13 +11,15 @@ import (
 	authconnect "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1/authservicev1connect"
 
 	"github.com/salivare-io/sso-auth-server/internal/domain/auth/providers"
+	rpcmiddleware "github.com/salivare-io/sso-auth-server/internal/middleware/rpc"
 )
 
+// Auth defines auth service operations.
 type Auth interface {
-	Login(ctx context.Context, provider string, code string) (access, refresh string, err error)
+	Login(ctx context.Context, provider string, code string, appID string) (access, refresh string, err error)
 }
 
-// ServerAPI implements the expected authconnect interface
+// ServerAPI implements the generated Connect handler interface.
 type ServerAPI struct {
 	auth Auth
 }
@@ -25,12 +27,12 @@ type ServerAPI struct {
 // compile-time assertion: ensure ServerAPI implements the generated Connect handler interface.
 var _ authconnect.AuthServiceHandler = (*ServerAPI)(nil)
 
-// NewServerAPI adapter designer.
+// NewServerAPI creates a new ServerAPI.
 func NewServerAPI(authSvc Auth) *ServerAPI {
 	return &ServerAPI{auth: authSvc}
 }
 
-// Register mounts ConnectRPC handler in chi.Router.
+// Register mounts the Connect handler in a router.
 func Register(r interface{ Mount(string, http.Handler) }, authSvc Auth) {
 	path, handler := authconnect.NewAuthServiceHandler(NewServerAPI(authSvc))
 	r.Mount(path, handler)
@@ -40,9 +42,31 @@ func (s *ServerAPI) ExchangeCode(
 	ctx context.Context,
 	req *connect.Request[authv1.ExchangeCodeRequest],
 ) (*connect.Response[authv1.ExchangeCodeResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ExchangeCode: not implemented"))
+	// Get app_id from the context (set by middleware).
+	appID := rpcmiddleware.GetAppIDFromContext(ctx)
+	if appID == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("app_id not found in context"))
+	}
+
+	providerStr := providerToString(req.Msg.Provider)
+	if providerStr == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid provider"))
+	}
+
+	access, refresh, err := s.auth.Login(ctx, providerStr, req.Msg.Code, appID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, err)
+	}
+
+	return &connect.Response[authv1.ExchangeCodeResponse]{
+		Msg: &authv1.ExchangeCodeResponse{
+			AccessToken:  access,
+			RefreshToken: refresh,
+		},
+	}, nil
 }
 
+// ...existing code...
 func (s *ServerAPI) UserDetails(
 	ctx context.Context,
 	req *connect.Request[authv1.UserDetailsRequest],

@@ -1,8 +1,8 @@
 env: "local" # dev, prod
 token_ttl: 1h
-grpc:
+http:
   host: "localhost"
-  port: 44040
+  port: 8080
   timeout: 2m
   shutdown_timeout: 3m
 redis:

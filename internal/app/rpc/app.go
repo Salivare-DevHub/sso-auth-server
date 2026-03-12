@@ -15,14 +15,16 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	authconnect "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1/authservicev1connect"
 	"github.com/salivare-io/slogx"
-	rpcmiddleware "github.com/salivare-io/sso-auth-server/internal/middleware/rpc"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/salivare-io/sso-auth-server/internal/config"
-	authrpc "github.com/salivare-io/sso-auth-server/internal/rpc/auth"
+	appmanager "github.com/salivare-io/sso-auth-server/internal/domain/app"
+	rpcmiddleware "github.com/salivare-io/sso-auth-server/internal/middleware/rpc"
+	authrpc "github.com/salivare-io/sso-auth-server/internal/rpchttp/auth"
 )
 
+// App is the RPC HTTP server wrapper.
 type App struct {
 	log             *slogx.Logger
 	router          chi.Router
@@ -32,9 +34,11 @@ type App struct {
 	shutdownTimeout time.Duration
 }
 
+// New creates a new RPC HTTP server.
 func New(
 	log *slogx.Logger,
 	authService authrpc.Auth,
+	appManager *appmanager.Manager,
 	httpCfg config.HTTPConfig,
 	envCfh string,
 ) *App {
@@ -46,13 +50,13 @@ func New(
 	r.Use(rpcmiddleware.Logger(log))
 	r.Use(middleware.Timeout(httpCfg.Timeout))
 
-	// TODO: забирать из секретов
-	r.Use(rpcmiddleware.Bearer("expectedToken"))
+	// Use Bearer middleware with AppManager to validate bearer tokens.
+	r.Use(rpcmiddleware.Bearer(appManager))
 
 	// mount generated Connect handler via adapter register
 	authrpc.Register(r, authService)
 
-	enableReflection := envCfh == config.EnvLocal || envCfh == config.EnvProd
+	enableReflection := envCfh == config.EnvLocal || envCfh == config.EnvDev
 	registerReflection(r, log, enableReflection)
 
 	addr := net.JoinHostPort(httpCfg.Host, strconv.Itoa(httpCfg.Port))
@@ -74,12 +78,14 @@ func New(
 	}
 }
 
+// MustRun starts the server or panics on error.
 func (a *App) MustRun() {
 	if err := a.Run(); err != nil {
 		panic(err)
 	}
 }
 
+// Run starts serving HTTP requests.
 func (a *App) Run() error {
 	const op = "rpcapp.Run"
 
@@ -103,6 +109,7 @@ func (a *App) Run() error {
 	return nil
 }
 
+// Stop gracefully shuts down the server.
 func (a *App) Stop() {
 	const op = "rpcapp.Stop"
 
