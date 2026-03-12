@@ -14,6 +14,7 @@ import (
 	userrepo "github.com/salivare-io/sso-auth-server/internal/domain/user"
 	"github.com/salivare-io/sso-auth-server/internal/providers/oauth"
 	"github.com/salivare-io/sso-auth-server/internal/services/auth"
+	"github.com/salivare-io/sso-auth-server/internal/storage/permissions"
 	"github.com/salivare-io/sso-auth-server/internal/storage/redis"
 )
 
@@ -68,7 +69,9 @@ func New(log *slogx.Logger, cfg *config.Config) (*App, error) {
 	appsMap := convertInternalAppsToModels(cfg.InternalApps)
 	appManager := appmanager.NewAppManager(appsMap)
 
-	authService := auth.New(log, identitySource, userStore, refreshStore, appManager)
+	permissionsStore := permissions.NewInMemoryStore()
+
+	authService := auth.New(log, identitySource, userStore, userStore, refreshStore, appManager, permissionsStore)
 
 	rpcApp := rpcapp.New(log, authService, appManager, cfg.HTTP, cfg.Env)
 

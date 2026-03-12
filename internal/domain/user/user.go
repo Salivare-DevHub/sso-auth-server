@@ -34,7 +34,7 @@ func NewInMemoryRepository() *InMemoryRepository {
 }
 
 // SaveUser creates a new user or returns an existing one.
-func (r *InMemoryRepository) SaveUser(ctx context.Context, email string) (string, error) {
+func (r *InMemoryRepository) SaveUser(ctx context.Context, email, name string) (string, error) {
 	if email == "" {
 		return "", errors.New("email is empty")
 	}
@@ -44,6 +44,11 @@ func (r *InMemoryRepository) SaveUser(ctx context.Context, email string) (string
 
 	// If the user already exists, return its ID.
 	if userID, ok := r.email[email]; ok {
+		if name != "" {
+			if user, ok := r.users[userID]; ok {
+				user.Name = name
+			}
+		}
 		return userID, nil
 	}
 
@@ -57,6 +62,7 @@ func (r *InMemoryRepository) SaveUser(ctx context.Context, email string) (string
 	user := &User{
 		ID:    userIDStr,
 		Email: email,
+		Name:  name,
 	}
 
 	r.users[userIDStr] = user
