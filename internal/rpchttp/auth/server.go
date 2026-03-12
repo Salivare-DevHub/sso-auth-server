@@ -7,11 +7,11 @@ import (
 
 	connect "connectrpc.com/connect"
 
+	chimiddleware "github.com/salivare-io/middleware/chi"
 	authv1 "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1"
 	authconnect "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1/authservicev1connect"
 
 	"github.com/salivare-io/sso-auth-server/internal/domain/auth/providers"
-	rpcmiddleware "github.com/salivare-io/sso-auth-server/internal/middleware/rpc"
 )
 
 // Auth defines auth service operations.
@@ -42,8 +42,8 @@ func (s *ServerAPI) ExchangeCode(
 	ctx context.Context,
 	req *connect.Request[authv1.ExchangeCodeRequest],
 ) (*connect.Response[authv1.ExchangeCodeResponse], error) {
-	// Get app_id from the context (set by middleware).
-	appID := rpcmiddleware.GetAppIDFromContext(ctx)
+	// Get app_id from the context.
+	appID := chimiddleware.GetAppIDFromContext(ctx)
 	if appID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("app_id not found in context"))
 	}

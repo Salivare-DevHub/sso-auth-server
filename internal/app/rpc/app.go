@@ -13,6 +13,7 @@ import (
 	"connectrpc.com/grpcreflect"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	chimiddleware "github.com/salivare-io/middleware/chi"
 	authconnect "github.com/salivare-io/protos-sso/gen/go/sso/service/auth/v1/authservicev1connect"
 	"github.com/salivare-io/slogx"
 	"golang.org/x/net/http2"
@@ -20,7 +21,6 @@ import (
 
 	"github.com/salivare-io/sso-auth-server/internal/config"
 	appmanager "github.com/salivare-io/sso-auth-server/internal/domain/app"
-	rpcmiddleware "github.com/salivare-io/sso-auth-server/internal/middleware/rpc"
 	authrpc "github.com/salivare-io/sso-auth-server/internal/rpchttp/auth"
 )
 
@@ -46,12 +46,12 @@ func New(
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
-	r.Use(rpcmiddleware.LoggerContext(log))
-	r.Use(rpcmiddleware.Logger(log))
+	r.Use(chimiddleware.LoggerContext(log))
+	r.Use(chimiddleware.Logger(log))
 	r.Use(middleware.Timeout(httpCfg.Timeout))
 
 	// Use Bearer middleware with AppManager to validate bearer tokens.
-	r.Use(rpcmiddleware.Bearer(appManager))
+	r.Use(chimiddleware.Bearer(appManager))
 
 	// mount generated Connect handler via adapter register
 	authrpc.Register(r, authService)
