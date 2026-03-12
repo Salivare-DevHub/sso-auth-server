@@ -43,6 +43,8 @@ github.com/salivare-io/middleware v0.0.1 h1:0kFgUY5FwQHzuUgJYciLKUStva0lvmSzYN9i
 github.com/salivare-io/middleware v0.0.1/go.mod h1:YLtMX2eovF7PBIZ65de1dSDy2lVxF5HaKWECzCKCm8s=
 github.com/salivare-io/protos-sso v0.1.7 h1:8q5SQSA5y8htCJh1X56pPYJEFK58aIL+/o5T6SEERTo=
 github.com/salivare-io/protos-sso v0.1.7/go.mod h1:AmL106INLeo9g5SzzZwemDf3SYDVveWAoWfcqUXCISM=
+github.com/salivare-io/protos-sso v0.1.8 h1:aKNsO5zcR3+w1CN211G6GFMDaua2IrUb7bLlLvdAxrs=
+github.com/salivare-io/protos-sso v0.1.8/go.mod h1:AmL106INLeo9g5SzzZwemDf3SYDVveWAoWfcqUXCISM=
 github.com/salivare-io/slogx v0.0.5 h1:bz8SzkgixK2IgiiQ9ZF0CTiBa0oFhg+4zUSSR3z7ves=
 github.com/salivare-io/slogx v0.0.5/go.mod h1:+iZTrnM/TH6oK2nhzNjTbkfjD23OrnBS8v1DEd4vKYk=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=

@@ -11,7 +11,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/salivare-io/middleware v0.0.1
-	github.com/salivare-io/protos-sso v0.1.7
+	github.com/salivare-io/protos-sso v0.1.8
 	github.com/salivare-io/slogx v0.0.5
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.48.0
