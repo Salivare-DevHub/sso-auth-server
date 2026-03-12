@@ -1,18 +1,14 @@
 package main
 
 import (
-	"github.com/Salivare-DevHub/sso-auth-server/internal/app"
-	"github.com/Salivare-DevHub/sso-auth-server/internal/config"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-)
 
-const (
-	envLocal = "local"
-	envDev   = "dev"
-	envProd  = "prod"
+	"github.com/salivare-io/slogx"
+	"github.com/salivare-io/sso-auth-server/internal/app"
+	"github.com/salivare-io/sso-auth-server/internal/config"
 )
 
 func main() {
@@ -20,13 +16,13 @@ func main() {
 
 	log := setupLogger(cfg.Env)
 
-	application, err := app.New(log, cfg.GRPC.Port)
+	application, err := app.New(log, cfg)
 	if err != nil {
 		log.Error("failed to init application", slog.String("err", err.Error()))
 		os.Exit(1)
 	}
 
-	go application.GRPCSrv.MustRun()
+	go application.RPCSrv.MustRun()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
@@ -35,28 +31,28 @@ func main() {
 
 	log.Info("Shutting down...")
 
-	application.GRPCSrv.Stop()
+	application.RPCSrv.Stop()
 
 	log.Info("Goodbye!")
 }
 
-func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
+func setupLogger(env string) *slogx.Logger {
+	var level slog.Level
 
 	switch env {
-	case envLocal:
-		log = slog.New(
-			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
-		)
+	case config.EnvLocal:
+		level = slogx.LevelTrace
+	case config.EnvDev:
+		level = slog.LevelDebug
+	case config.EnvProd:
+		level = slog.LevelInfo
+	default:
+		level = slog.LevelInfo
 	}
 
-	return log
+	return slogx.New(
+		slogx.WithLevel(level),
+		slogx.WithContextKeys("trace_id", "request_id"),
+		slogx.WithRemoval(slogx.NewRemovalSet().Add("bearer_token")),
+	)
 }

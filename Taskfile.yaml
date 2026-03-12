@@ -1,0 +1,33 @@
+version: '3'
+
+tasks:
+  fmt:
+    desc: "Format code and fix imports"
+    cmds:
+      - go install golang.org/x/tools/cmd/goimports@latest
+      - go install mvdan.cc/gofumpt@latest
+      - goimports -w .
+      - gofumpt -w .
+    silent: true
+
+  tidy:
+    desc: "Go mod tidy"
+    cmds:
+      - go mod tidy
+    silent: true
+
+  vet:
+    desc: "Run go vet"
+    cmds:
+      - go vet ./...
+    silent: true
+
+  test:
+    desc: "Run test"
+    cmds:
+      - go test ./...
+    silent: true
+
+  all:
+    desc: "Full verification: format, tidy, vet, tests"
+    deps: [fmt, tidy, vet, test]

@@ -1,0 +1,4 @@
+*
+!.gitignore
+!apps_config_example.yaml
+!config_example.yaml

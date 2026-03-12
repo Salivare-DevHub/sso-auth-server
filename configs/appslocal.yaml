@@ -1,7 +1,0 @@
-- id: 1
-  name: "web"
-  secret: "super-secret-web"
-
-- id: 2
-  name: "mobile"
-  secret: "super-secret-mobile"

@@ -1,0 +1,10 @@
+env: "local" # dev, prod
+token_ttl: 1h
+http:
+  host: "localhost"
+  port: 8080
+  timeout: 2m
+  shutdown_timeout: 3m
+redis:
+  host: "localhost"
+  port: 6379
